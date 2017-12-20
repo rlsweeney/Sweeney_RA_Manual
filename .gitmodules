@@ -1,0 +1,3 @@
+[submodule "lab.wiki"]
+	path = lab.wiki
+	url = ../lab.wiki.git
