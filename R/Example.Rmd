@@ -1,0 +1,113 @@
+---
+title: "Example RMD Document"
+author: "Richard Sweeney"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+    pdf_document:
+    toc: no
+fig_height: 3
+fig_width: 6
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output") }) # saves 
+#TO RENDER THIS FILE USE 
+#rmarkdown::render("Example.Rmd", output_dir = "../output")
+---
+
+<style>
+
+table, td, th {
+  border: none;
+  padding-left: 1em;
+  padding-right: 1em;
+  min-width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+</style>
+    
+## Overview
+Example RMD document 
+
+Some common features 
+- knits to PDF in a specified output folder (default is where code is)
+- makes nice tables (using stargazer)
+
+Example based the that stargazer [cheatsheet](https://www.jakeruss.com/cheatsheets/stargazer/).
+
+```{r basic_setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+out_type = "latex" # set this to html when working in Rstudio
+
+#===========================================================================
+# SETUP
+#===========================================================================
+root <- getwd()
+
+library(tidyverse)
+library(lubridate)
+library(lfe)
+library(texreg)
+library(stargazer)
+library(alpaca)
+library(kableExtra)
+library(ggplot2)
+
+```
+## Load the data 
+```{r load_data, include = FALSE}
+
+library("nycflights13")
+
+daily <- flights %>%
+  filter(origin == "EWR") %>%
+  group_by(year, month, day) %>%
+  summarise(delay = mean(dep_delay, na.rm = TRUE))
+
+daily_weather <- weather %>%
+  filter(origin == "EWR") %>%
+  group_by(year, month, day) %>%
+  summarise(temp   = mean(temp, na.rm = TRUE),
+            wind   = mean(wind_speed, na.rm = TRUE),
+            precip = sum(precip, na.rm = TRUE))
+
+# Merge flights with weather data frames
+both <- daily %>%
+  inner_join(y = daily_weather, by = c("year", "month", "day")) %>% 
+  data.frame()  # Temporary fix
+
+# Create an indicator for quarter
+both$quarter <- cut(both$month, breaks = c(0, 3, 6, 9, 12), 
+                                labels = c("1", "2", "3", "4"))
+
+# Create a vector of class logical
+both$hot <- as.logical(both$temp > 85)
+```
+
+## Summarize the data 
+Uses the default stargazer summary table
+
+```{r sumstats, results='asis',warning=FALSE} 
+stargazer(both, type = out_type ,header = FALSE)
+
+ggplot(both, aes(precip, delay)) + geom_point()
+
+```    
+---
+## Run some regressions 
+
+```{r, results='asis',warning=FALSE} 
+
+output  <- lm(delay ~ temp + wind + precip, data = both)
+output2 <- lm(delay ~ temp + wind + precip + quarter, data = both)
+
+it_type = "latex"
+stargazer(output, output2, omit.stat=c("LL","ser","f"),
+              omit.table.layout = c("dl"),
+              add.lines = list(c("Model","Log","Pois","Log","Pois","Log","Pois","Log","Pois"),
+                               c("Spec","GY20","GY20","GY10","GY10","GY5","GY5","bs6","bs6")),
+              title = "Title",type=out_type,header = FALSE)
+```
