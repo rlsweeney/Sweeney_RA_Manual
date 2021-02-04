@@ -24,3 +24,6 @@ To simply run what's in a `.R` script and output results to `cmd`, use
 
 ## Notes from class
 This is where you should put stuff 
+
+Additional changes 
+
