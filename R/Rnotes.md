@@ -21,3 +21,6 @@ To simply run what's in a `.R` script and output results to `cmd`, use
 - then call `rmarkdown::render("Example.Rmd", output_dir = "../output")`
 
 - one annoying thing is that this doesn't use whatever information the "knit" button is doing in Rstudio. So need to specify output directory here if you want it to be different from where the code resides. 
+
+## Notes from class
+This is where you should put stuff 
